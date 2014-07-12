@@ -15,9 +15,23 @@ import (
 type FooterStruct struct {
 	Year int
 }
+
+type HeaderStruct struct {
+	Title string
+}
+
 type TemplateBundle struct {
-	Post   *BPost
-	Footer *FooterStruct
+	Post          *BPost
+	Footer        *FooterStruct
+	Header        *HeaderStruct
+	FormattedDate string
+}
+
+type TemplateBundleIndex struct {
+	Posts         []*BPost
+	Footer        *FooterStruct
+	Header        *HeaderStruct
+	FormattedDate string
 }
 
 const (
@@ -25,6 +39,7 @@ const (
 )
 
 var validPath = regexp.MustCompile("^/(view|edit|save)/([a-zA-Z0-9_-]+)$")
+
 var templates = template.Must(template.ParseFiles(
 	"templates/partials/header.html",
 	"templates/partials/footer.html",
@@ -64,8 +79,12 @@ func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 	bp.BodyHtml = template.HTML(bp.ContentHtml)
-	time.Now()
-	bundle := &TemplateBundle{Post: bp, Footer: &FooterStruct{Year: time.Now().Year()}}
+	bundle := &TemplateBundle{
+		Post:          bp,
+		Footer:        &FooterStruct{Year: time.Now().Year()},
+		Header:        &HeaderStruct{Title: bp.Title},
+		FormattedDate: bp.DateEditedMarkdown.Format("January 02, 2006 | Monday -- 15:04PM"),
+	}
 
 	renderTemplate(w, "view", bundle)
 }
@@ -157,6 +176,10 @@ func main() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/auth", authenticate)
 
+	fs := http.FileServer(http.Dir("static_data"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
 	http.HandleFunc("/", rootHandler)
+
 	http.ListenAndServe(":8080", nil)
 }
