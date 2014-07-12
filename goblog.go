@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	//"github.com/russross/blackfriday"
 	"html/template"
-	//"io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -66,6 +65,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 	bp.BodyHtml = template.HTML(bp.ContentHtml)
+
 	renderTemplate(w, "view", bp)
 }
 
@@ -158,7 +158,19 @@ func makeBasicAuthHandler(fn http.HandlerFunc) http.HandlerFunc {
 }
 
 func isAuthValid(user string, pass string) bool {
-	return user == "lambros" && pass == "petrou"
+	body, err := ioutil.ReadFile("sec/users.txt")
+	if err != nil {
+		fmt.Println("Cannot read users.txt!!!")
+		return false
+	}
+	users := strings.Split(string(body), "\n")
+	for _, u := range users {
+		utokens := strings.SplitN(u, ":", 2)
+		if user == utokens[0] {
+			return pass == utokens[1]
+		}
+	}
+	return false
 }
 
 func rejectAuthorization(w http.ResponseWriter) {
@@ -167,36 +179,6 @@ func rejectAuthorization(w http.ResponseWriter) {
 }
 
 func main() {
-	/*
-		p, err := NewBPost()
-		if err != nil {
-			fmt.Errorf("error while creating new empty blog post", err.Error())
-			return
-		}
-		p.Author = "Lambros Petrou"
-		p.ContentMarkdown = "	paragraph 1"
-		p.Save()
-
-		p, err = LoadBlogPost(p.Id)
-		if err != nil {
-			fmt.Println("error " + err.Error())
-		}
-		fmt.Println(p.IdStr(), p.Author, p.ContentMarkdown, p.DateCreated)
-
-		fmt.Println("Finished script!")
-
-		markdownContent, err := ioutil.ReadFile("articles/hello.md")
-		if err != nil {
-			fmt.Println("error while reading markdown hello.md")
-		}
-		htmlContent := blackfriday.MarkdownCommon(markdownContent)
-
-		fmt.Println("\n\n", string(htmlContent))
-
-		p.ContentMarkdown = string(markdownContent)
-		p.Save()
-		fmt.Println("updated content of the markdown")
-	*/
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeBasicAuthHandler(makeHandler(editHandler)))
 	http.HandleFunc("/save/", makeBasicAuthHandler(makeHandler(saveHandler)))
