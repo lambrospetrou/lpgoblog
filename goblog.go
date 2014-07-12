@@ -23,15 +23,6 @@ var templates = template.Must(template.ParseFiles("templates/partials/header.htm
 	"templates/partials/footer.html", "templates/view.html", "templates/edit.html",
 	"templates/login.html"))
 
-/*
-func renderTemplate(w http.ResponseWriter, tmpl string, p *BPost) {
-	// now we can call the correct template by the basename filename
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-*/
 func renderTemplate(w http.ResponseWriter, tmpl string, o interface{}) {
 	// now we can call the correct template by the basename filename
 	err := templates.ExecuteTemplate(w, tmpl+".html", o)
@@ -121,6 +112,7 @@ func SecureCompare(given string, actual string) bool {
 	return subtle.ConstantTimeCompare(givenSha[:], actualSha[:]) == 1
 }
 
+// try to extract the credentials first from the header and then from the FormValue
 func authenticate(w http.ResponseWriter, r *http.Request) {
 	user := r.FormValue("user")
 	pass := r.FormValue("pass")
@@ -132,23 +124,26 @@ func authenticate(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not Authorized", http.StatusUnauthorized)
 }
 
+type ValidateCredFunc func(string, string) bool
+
 // THIS WILL DISPLAY THE CREDENTIALS BOX IN THE BROWSERS
-func makeBasicAuthHandler(fn http.HandlerFunc) http.HandlerFunc {
+func makeBasicAuthHandler(fnValid ValidateCredFunc,
+	fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// authenticate the token
 		auth := r.Header.Get("Authorization")
 		if len(auth) < 6 || auth[:6] != "Basic " {
-			rejectAuthorization(w)
+			rejectAuthBasic(w)
 			return
 		}
 		b, err := base64.StdEncoding.DecodeString(auth[6:])
 		if err != nil {
-			rejectAuthorization(w)
+			rejectAuthBasic(w)
 			return
 		}
 		tokens := strings.SplitN(string(b), ":", 2)
-		if len(tokens) != 2 || !isAuthValid(tokens[0], tokens[1]) {
-			rejectAuthorization(w)
+		if len(tokens) != 2 || !fnValid(tokens[0], tokens[1]) {
+			rejectAuthBasic(w)
 			return
 		}
 
@@ -157,7 +152,7 @@ func makeBasicAuthHandler(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func isAuthValid(user string, pass string) bool {
+func isBasicCredValid(user string, pass string) bool {
 	body, err := ioutil.ReadFile("sec/users.txt")
 	if err != nil {
 		fmt.Println("Cannot read users.txt!!!")
@@ -166,22 +161,28 @@ func isAuthValid(user string, pass string) bool {
 	users := strings.Split(string(body), "\n")
 	for _, u := range users {
 		utokens := strings.SplitN(u, ":", 2)
-		if user == utokens[0] {
-			return pass == utokens[1]
+		if SecureCompare(user, utokens[0]) {
+			return SecureCompare(pass, utokens[1])
 		}
+		//if user == utokens[0] {
+		//	return pass == utokens[1]
+		//}
 	}
 	return false
 }
 
-func rejectAuthorization(w http.ResponseWriter) {
+func rejectAuthBasic(w http.ResponseWriter) {
 	w.Header().Set("WWW-Authenticate", "Basic realm=\""+BasicRealm+"\"")
 	http.Error(w, "Not Authorized", http.StatusUnauthorized)
 }
 
 func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
-	http.HandleFunc("/edit/", makeBasicAuthHandler(makeHandler(editHandler)))
-	http.HandleFunc("/save/", makeBasicAuthHandler(makeHandler(saveHandler)))
+
+	http.HandleFunc("/edit/", makeBasicAuthHandler(isBasicCredValid,
+		makeHandler(editHandler)))
+	http.HandleFunc("/save/", makeBasicAuthHandler(isBasicCredValid,
+		makeHandler(saveHandler)))
 
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/auth", authenticate)
