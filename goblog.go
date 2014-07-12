@@ -2,15 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/lambrospetrou/lpgoauth"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
-
-	"crypto/sha256"
-	"crypto/subtle"
-	"encoding/base64"
 	"strings"
 )
 
@@ -19,8 +16,11 @@ const (
 )
 
 var validPath = regexp.MustCompile("^/(view|edit|save)/([a-zA-Z0-9_-]+)$")
-var templates = template.Must(template.ParseFiles("templates/partials/header.html",
-	"templates/partials/footer.html", "templates/view.html", "templates/edit.html",
+var templates = template.Must(template.ParseFiles(
+	"templates/partials/header.html",
+	"templates/partials/footer.html",
+	"templates/view.html",
+	"templates/edit.html",
 	"templates/login.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, o interface{}) {
@@ -32,7 +32,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, o interface{}) {
 }
 
 // BLOG HANDLERS
-
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
@@ -101,17 +100,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "login", "")
 }
 
-// BasicRealm is used when setting the WWW-Authenticate response header.
-var BasicRealm = "Authorization Required"
-
-// SecureCompare performs a constant time compare of two strings to limit timing attacks.
-func SecureCompare(given string, actual string) bool {
-	givenSha := sha256.Sum256([]byte(given))
-	actualSha := sha256.Sum256([]byte(actual))
-
-	return subtle.ConstantTimeCompare(givenSha[:], actualSha[:]) == 1
-}
-
 // try to extract the credentials first from the header and then from the FormValue
 func authenticate(w http.ResponseWriter, r *http.Request) {
 	user := r.FormValue("user")
@@ -124,34 +112,7 @@ func authenticate(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not Authorized", http.StatusUnauthorized)
 }
 
-type ValidateCredFunc func(string, string) bool
-
-// THIS WILL DISPLAY THE CREDENTIALS BOX IN THE BROWSERS
-func makeBasicAuthHandler(fnValid ValidateCredFunc,
-	fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// authenticate the token
-		auth := r.Header.Get("Authorization")
-		if len(auth) < 6 || auth[:6] != "Basic " {
-			rejectAuthBasic(w)
-			return
-		}
-		b, err := base64.StdEncoding.DecodeString(auth[6:])
-		if err != nil {
-			rejectAuthBasic(w)
-			return
-		}
-		tokens := strings.SplitN(string(b), ":", 2)
-		if len(tokens) != 2 || !fnValid(tokens[0], tokens[1]) {
-			rejectAuthBasic(w)
-			return
-		}
-
-		// delegate the call
-		fn(w, r)
-	}
-}
-
+// Checks if the username:password are correct and valid
 func isBasicCredValid(user string, pass string) bool {
 	body, err := ioutil.ReadFile("sec/users.txt")
 	if err != nil {
@@ -161,8 +122,8 @@ func isBasicCredValid(user string, pass string) bool {
 	users := strings.Split(string(body), "\n")
 	for _, u := range users {
 		utokens := strings.SplitN(u, ":", 2)
-		if SecureCompare(user, utokens[0]) {
-			return SecureCompare(pass, utokens[1])
+		if lpgoauth.SecureCompare(user, utokens[0]) {
+			return lpgoauth.SecureCompare(pass, utokens[1])
 		}
 		//if user == utokens[0] {
 		//	return pass == utokens[1]
@@ -171,17 +132,12 @@ func isBasicCredValid(user string, pass string) bool {
 	return false
 }
 
-func rejectAuthBasic(w http.ResponseWriter) {
-	w.Header().Set("WWW-Authenticate", "Basic realm=\""+BasicRealm+"\"")
-	http.Error(w, "Not Authorized", http.StatusUnauthorized)
-}
-
 func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 
-	http.HandleFunc("/edit/", makeBasicAuthHandler(isBasicCredValid,
+	http.HandleFunc("/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(editHandler)))
-	http.HandleFunc("/save/", makeBasicAuthHandler(isBasicCredValid,
+	http.HandleFunc("/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(saveHandler)))
 
 	http.HandleFunc("/login", loginHandler)
