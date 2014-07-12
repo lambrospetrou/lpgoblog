@@ -9,7 +9,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
+
+type FooterStruct struct {
+	Year int
+}
+type TemplateBundle struct {
+	Post   *BPost
+	Footer *FooterStruct
+}
 
 const (
 	DIR_POSTS_SRC = "posts/pub/"
@@ -55,8 +64,10 @@ func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 	bp.BodyHtml = template.HTML(bp.ContentHtml)
+	time.Now()
+	bundle := &TemplateBundle{Post: bp, Footer: &FooterStruct{Year: time.Now().Year()}}
 
-	renderTemplate(w, "view", bp)
+	renderTemplate(w, "view", bundle)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, id string) {
@@ -74,6 +85,12 @@ func editHandler(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
+	// avoid changing the data with a GET request
+	if strings.ToLower(r.Method) == "get" {
+		http.Error(w, "Only through the /edit/:id url", http.StatusMethodNotAllowed)
+		return
+	}
+
 	bp_id, err := strconv.Atoi(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -125,9 +142,6 @@ func isBasicCredValid(user string, pass string) bool {
 		if lpgoauth.SecureCompare(user, utokens[0]) {
 			return lpgoauth.SecureCompare(pass, utokens[1])
 		}
-		//if user == utokens[0] {
-		//	return pass == utokens[1]
-		//}
 	}
 	return false
 }

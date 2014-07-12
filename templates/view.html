@@ -1,17 +1,17 @@
-{{ template "header" . }}
+{{template "header"}}
 
 <article>
     <header>
-        <h1>{{ .Title }}</h1>
-	<h3>{{ .Author }} @ {{ .DateEditedMarkdown }}</h3>
+        <h1>{{ .Post.Title }}</h1>
+	<h3>{{ .Post.Author }} @ {{ .Post.DateEditedMarkdown }}</h3>
     </header>    
     <section>
-    	{{ .BodyHtml }}
+    	{{ .Post.BodyHtml }}
     </section>
 
     <section>
-    	<a href="/edit/{{.Id}}" title="edit post">edit post</a>
+    	<a href="/edit/{{.Post.Id}}" title="edit post">edit post</a>
     </section>
 </article>
 
-{{ template "footer" . }}
+{{template "footer" .Footer}}
