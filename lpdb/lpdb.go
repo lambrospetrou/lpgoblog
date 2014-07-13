@@ -3,6 +3,7 @@ package lpdb
 import (
 	"errors"
 	"fmt"
+	"github.com/couchbase/gomemcached"
 	"github.com/couchbaselabs/go-couchbase"
 )
 
@@ -64,6 +65,10 @@ func (db *CDB) Get(key string, obj interface{}) error {
 
 func (db *CDB) GetRaw(key string) ([]byte, error) {
 	return db.bucket.GetRaw(key)
+}
+
+func (db *CDB) GetBulk(keys []string) (map[string]*gomemcached.MCResponse, error) {
+	return db.bucket.GetBulk(keys)
 }
 
 func (db *CDB) Set(key string, expiry int, data interface{}) error {

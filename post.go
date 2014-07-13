@@ -6,6 +6,7 @@ import (
 	"github.com/lambrospetrou/lpgoblog/lpdb"
 	"github.com/russross/blackfriday"
 	"html/template"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -23,12 +24,26 @@ type BPost struct {
 	BodyHtml           template.HTML `json:"-"`
 }
 
+// ByAge implements sort.Interface for []Person based on
+// the Age field.
+type ByDate []*BPost
+
+func (a ByDate) Len() int      { return len(a) }
+func (a ByDate) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByDate) Less(i, j int) bool {
+	return a[i].DateCreated.Unix() > a[j].DateCreated.Unix()
+}
+
 func (p *BPost) IdStr() string {
 	return strconv.Itoa(p.Id)
 }
 
-func (p *BPost) FormattedUpdateTime() string {
+func (p *BPost) FormattedEditedTime() string {
 	return p.DateEditedMarkdown.Format("January 02, 2006 | Monday -- 15:04PM")
+}
+
+func (p *BPost) FormattedCreatedTime() string {
+	return p.DateCreated.Format("January 02, 2006 | Monday -- 15:04PM")
 }
 
 func (p *BPost) Save() error {
@@ -52,6 +67,41 @@ func (p *BPost) Save() error {
 /////////////////////////////////////////////////////
 ////////////////// GENERAL FUNCTIONS
 /////////////////////////////////////////////////////
+
+func LoadAllBlogPosts() ([]*BPost, error) {
+	db, err := lpdb.CDBInstance()
+	if err != nil {
+		return nil, errors.New("Could not get instance of Couchbase")
+	}
+	var count int
+	err = db.Get("bp::count", &count)
+	if err != nil {
+		return nil, errors.New("Could not get number of blog posts!")
+	}
+	keys := make([]string, count)
+	for i := 1; i < count; i++ {
+		keys[i] = "bp::" + strconv.Itoa(i)
+	}
+	postsMap, err := db.GetBulk(keys)
+	if err != nil {
+		return nil, errors.New("Could not get blog posts!")
+	}
+	var posts []*BPost = make([]*BPost, count)
+	count = 0
+	for _, v := range postsMap {
+		bp := &BPost{}
+		err = json.Unmarshal(v.Body, bp)
+		if err == nil {
+			posts[count] = bp
+			count++
+		}
+	}
+	// we take only a part of the slice since there might were deleted posts
+	// and their id returned nothing with the bulk get.
+	posts = posts[:count]
+	sort.Sort(ByDate(posts))
+	return posts, nil
+}
 
 func LoadBlogPost(id int) (*BPost, error) {
 	p := &BPost{}

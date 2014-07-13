@@ -149,12 +149,19 @@ code{
 		border-radius: 2px 15px;
 		color: #920000;
 	}
+		a.text-link-cv:hover{
+			border: 1px solid;
+		}
 
 	#header-logo{
 		font-size: 75px;
 		display: block;
 		line-height: 1;
 	}
+		#header-logo span:hover{
+			color: #920000;
+			cursor: default;
+		}
 
 	#header-quote{
 		font-style: italic;

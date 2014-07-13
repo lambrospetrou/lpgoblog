@@ -21,17 +21,15 @@ type HeaderStruct struct {
 }
 
 type TemplateBundle struct {
-	Post          *BPost
-	Footer        *FooterStruct
-	Header        *HeaderStruct
-	FormattedDate string
+	Post   *BPost
+	Footer *FooterStruct
+	Header *HeaderStruct
 }
 
 type TemplateBundleIndex struct {
-	Posts         []*BPost
-	Footer        *FooterStruct
-	Header        *HeaderStruct
-	FormattedDate string
+	Posts  []*BPost
+	Footer *FooterStruct
+	Header *HeaderStruct
 }
 
 const (
@@ -45,7 +43,8 @@ var templates = template.Must(template.ParseFiles(
 	"templates/partials/footer.html",
 	"templates/view.html",
 	"templates/edit.html",
-	"templates/add.html"))
+	"templates/add.html",
+	"templates/index.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, o interface{}) {
 	// now we can call the correct template by the basename filename
@@ -80,10 +79,9 @@ func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
 	}
 	bp.BodyHtml = template.HTML(bp.ContentHtml)
 	bundle := &TemplateBundle{
-		Post:          bp,
-		Footer:        &FooterStruct{Year: time.Now().Year()},
-		Header:        &HeaderStruct{Title: bp.Title},
-		FormattedDate: bp.FormattedUpdateTime(),
+		Post:   bp,
+		Footer: &FooterStruct{Year: time.Now().Year()},
+		Header: &HeaderStruct{Title: bp.Title},
 	}
 
 	renderTemplate(w, "view", bundle)
@@ -128,7 +126,6 @@ func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
-
 	if strings.ToLower(r.Method) == "get" {
 		renderTemplate(w, "add", "")
 		return
@@ -148,8 +145,20 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not supported method", http.StatusMethodNotAllowed)
 }
 
+// show all posts
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love you %s\n", r.URL.Path[1:])
+	//fmt.Fprintf(w, "Hi there, I love you %s\n", r.URL.Path[1:])
+	posts, err := LoadAllBlogPosts()
+	if err != nil {
+		http.Error(w, "Could not load blog posts", http.StatusInternalServerError)
+		return
+	}
+	bundle := &TemplateBundleIndex{
+		Footer: &FooterStruct{Year: time.Now().Year()},
+		Header: &HeaderStruct{Title: "All posts"},
+		Posts:  posts,
+	}
+	renderTemplate(w, "index", bundle)
 }
 
 // Checks if the username:password are correct and valid
@@ -179,10 +188,11 @@ func main() {
 
 	http.HandleFunc("/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
 
+	http.HandleFunc("/all", rootHandler)
+	http.HandleFunc("/", rootHandler)
+
 	fs := http.FileServer(http.Dir("static_data"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	http.HandleFunc("/", rootHandler)
 
 	http.ListenAndServe(":8080", nil)
 }

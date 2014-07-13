@@ -2,23 +2,15 @@
 
 <ul>
     {{range $index, $element := .Posts}}
-        {{ $index }} 
-        {{ $element }} 
+        <article>
+            <header>
+                <h1 class="post-title"> <a href="/view/{{$element.Id}}" title="view post">{{ $element.Title }}</a></h1>
+                <small class="post-meta-top">{{ $element.FormattedCreatedTime }}</small>
+            </header>    
+            <section class="post-meta-bottom">
+            </section>
+        </article>
     {{ end }}
 </ul>
-
-<article>
-    <header>
-        <h1 class="post-title">{{ .Post.Title }}</h1>
-        <small class="post-meta-top">{{ .FormattedDate }}</small>
-    </header>    
-    <section class="post-body">
-    	{{ .Post.BodyHtml }}
-    </section>
-
-    <section class="post-meta-bottom">
-    	<a href="/edit/{{.Post.Id}}" title="edit post">edit post</a>
-    </section>
-</article>
 
 {{template "footer" .Footer}}
