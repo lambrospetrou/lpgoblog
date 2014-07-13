@@ -127,7 +127,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	http.Redirect(w, r, "/view/"+bp.IdStr(), http.StatusFound)
+	http.Redirect(w, r, "/goblog/view/"+bp.IdStr(), http.StatusFound)
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request, id string) {
@@ -146,7 +146,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, "/goblog/", http.StatusFound)
 }
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +163,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		bp.Title = r.FormValue("title")
 		bp.Save()
 
-		http.Redirect(w, r, "/view/"+bp.IdStr(), http.StatusFound)
+		http.Redirect(w, r, "/goblog/view/"+bp.IdStr(), http.StatusFound)
 		return
 	}
 	http.Error(w, "Not supported method", http.StatusMethodNotAllowed)
@@ -217,7 +217,7 @@ func main() {
 	http.HandleFunc("/", rootHandler)
 
 	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/goblog/static/", http.StripPrefix("/goblog/static/", fs))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	http.ListenAndServe(":40080", nil)
 }
