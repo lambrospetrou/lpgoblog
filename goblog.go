@@ -36,7 +36,7 @@ const (
 	DIR_POSTS_SRC = "posts/pub/"
 )
 
-var validPath = regexp.MustCompile("^/(view|edit|save)/([a-zA-Z0-9_-]+)$")
+var validPath = regexp.MustCompile("^/(view|edit|save|del)/([a-zA-Z0-9_-]+)$")
 
 var templates = template.Must(template.ParseFiles(
 	"templates/partials/header.html",
@@ -120,9 +120,33 @@ func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
 	}
 	bp.ContentMarkdown = r.FormValue("markdown")
 	bp.Title = r.FormValue("title")
-	bp.Save()
+	bp.DateCreated, _ = time.Parse("2006-01-02", r.FormValue("date-created"))
+	err = bp.Save()
+	if err != nil {
+		http.Error(w, "Could not save post!", http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/view/"+bp.IdStr(), http.StatusFound)
+}
+
+func deleteHandler(w http.ResponseWriter, r *http.Request, id string) {
+	bp_id, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	bp, err := LoadBlogPost(bp_id)
+	if err != nil {
+		http.Error(w, "Could not find the post specified!", http.StatusBadRequest)
+		return
+	}
+	if err = bp.Del(); err != nil {
+		http.Error(w, "Could not delete the post specified!", http.StatusBadRequest)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
@@ -179,20 +203,21 @@ func isBasicCredValid(user string, pass string) bool {
 }
 
 func main() {
-	http.HandleFunc("/view/", makeHandler(viewHandler))
 
 	http.HandleFunc("/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(editHandler)))
 	http.HandleFunc("/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(saveHandler)))
-
+	http.HandleFunc("/del/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+		makeHandler(deleteHandler)))
 	http.HandleFunc("/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
 
+	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/all", rootHandler)
 	http.HandleFunc("/", rootHandler)
 
 	fs := http.FileServer(http.Dir("static_data"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/goblog/static/", http.StripPrefix("/goblog/static/", fs))
 
 	http.ListenAndServe(":40080", nil)
 }

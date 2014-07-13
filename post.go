@@ -31,7 +31,13 @@ type ByDate []*BPost
 func (a ByDate) Len() int      { return len(a) }
 func (a ByDate) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a ByDate) Less(i, j int) bool {
-	return a[i].DateCreated.Unix() > a[j].DateCreated.Unix()
+	if a[i].DateCreated.Unix() > a[j].DateCreated.Unix() {
+		return true
+	}
+	if a[i].DateCreated.Unix() < a[j].DateCreated.Unix() {
+		return false
+	}
+	return a[i].DateEditedMarkdown.Unix() >= a[j].DateEditedMarkdown.Unix()
 }
 
 func (p *BPost) IdStr() string {
@@ -43,7 +49,11 @@ func (p *BPost) FormattedEditedTime() string {
 }
 
 func (p *BPost) FormattedCreatedTime() string {
-	return p.DateCreated.Format("January 02, 2006 | Monday -- 15:04PM")
+	return p.DateCreated.Format("January 02, 2006 | Monday")
+}
+
+func (p *BPost) HTML5CreatedTime() string {
+	return p.DateCreated.Format("2006-01-02")
 }
 
 func (p *BPost) Save() error {
@@ -64,6 +74,15 @@ func (p *BPost) Save() error {
 	return db.SetRaw("bp::"+p.IdStr(), 0, jsonBytes)
 }
 
+func (p *BPost) Del() error {
+	// store into the database
+	db, err := lpdb.CDBInstance()
+	if err != nil {
+		return errors.New("Could not get instance of Couchbase")
+	}
+	return db.Delete("bp::" + p.IdStr())
+}
+
 /////////////////////////////////////////////////////
 ////////////////// GENERAL FUNCTIONS
 /////////////////////////////////////////////////////
@@ -78,8 +97,9 @@ func LoadAllBlogPosts() ([]*BPost, error) {
 	if err != nil {
 		return nil, errors.New("Could not get number of blog posts!")
 	}
-	keys := make([]string, count)
-	for i := 1; i < count; i++ {
+	// allocate space for all the posts (start from 1 and inclusive count)
+	keys := make([]string, count+1)
+	for i := 1; i <= count; i++ {
 		keys[i] = "bp::" + strconv.Itoa(i)
 	}
 	postsMap, err := db.GetBulk(keys)
