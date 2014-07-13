@@ -1,10 +1,15 @@
 {{ template "header" }}
 
 <h1>Editing {{.Title}}</h1>
+
 <form action="/save/{{.Id}}" method="POST">
-	<input name="title" type="text" value="{{.Title}}"/>
+	<label for="title">post title</label>
+	<input id="title" name="title" type="text" value="{{.Title}}" required/>
+	<label for="date-created">date created</label>
+	<input id="date-created" name="date-created" type="date" value="{{.HTML5CreatedTime}}">
     <div>
-        <textarea name="markdown" rows="30" cols="80">{{printf "%s" .ContentMarkdown}}</textarea>
+    	<label for="markdown">post markdown content</label>
+        <textarea id="markdown" name="markdown" rows="30" cols="80" required>{{printf "%s" .ContentMarkdown}}</textarea>
     </div>
 	<div>
 		<input type="submit" value="Save">

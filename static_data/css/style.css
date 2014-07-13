@@ -11,7 +11,7 @@ body{
 	line-height: 1.5;
 	padding: 0;
 	margin: 0;
-	background-color: #fdfdfd;
+	background-color: #ffffff;
 }
 
 #outer-wrapper{
@@ -27,12 +27,10 @@ body{
 }
 
 .inner-section{
-	padding: 0;
+	padding: 10px 15px 20px 15px;
 	margin: 0;
-	width: 800px;
+	width: 700px;
 	margin: 0 auto;
-	padding-bottom: 20px;
-	padding-top: 10px;
 }
 
 a, a:link, a:active {
@@ -50,26 +48,27 @@ a:hover{
 
 h1{
 	font-size: 28px;
-	padding-top: 5px;
-	padding-bottom: 5px;
+	margin-top: 15px;
+	margin-bottom: 10px;
 }
 
 h2{
 	font-size: 24px;
-	padding-top: 3px;
-	padding-bottom: 5px;
+	margin-top: 15px;
+	margin-bottom: 10px;
+	border-bottom: 2px solid #920000;
 }
 
 h3{
 	font-size: 20px;
-	padding-top: 3px;
-	padding-bottom: 3px;
+	margin-top: 10px;
+	margin-bottom: 5px;
 }
 
 h4{
 	font-size: 18px;
-	padding-top: 3px;
-	padding-bottom: 3px;
+	margin-top: 5px;
+	margin-bottom: 5px;
 }
 
 h5{
@@ -77,7 +76,7 @@ h5{
 }
 
 p{
-	margin-top: 5px;
+	margin-top: 15px;
 }
 
 
@@ -129,6 +128,37 @@ code{
 	background-color: #fafafa;
 	border: 1px dotted #920000;
 	border-left: 10px double #920000;
+	font-size: 12px;
+	font-family: Consolas, 'Courrier New', monospace;
+}
+
+input, textarea {
+	width: 100%;
+	padding: 5px;
+	margin-bottom: 5px;
+	font-family: Lato, Roboto, 'Open Sans', Arial;
+	outline: none;
+	border: 1px solid #afafaf;
+}
+
+input:focus, textarea:focus,
+input:active, textarea:active{
+	border: 1px solid #920000;
+}
+
+input[type="button"], input[type="submit"], button{
+	width: auto;
+	padding: 10px 15px;
+	border: 0;
+	background-color: #920000;
+	opacity: 0.7;
+	color: #ffffff;
+	font-weight: bold;
+}
+
+input[type="button"]:hover, input[type="submit"]:hover, button:hover{
+	opacity: 1;
+	cursor: pointer;
 }
 
 /******************************
@@ -142,6 +172,9 @@ code{
 	border-bottom: dotted 1px #bfbfbf;
 	text-align: center;
 }
+	#inner-header h1{
+		font-variant: small-caps;
+	}
 
 	a.text-link-cv{
 		padding: 3px;
@@ -185,6 +218,9 @@ code{
 #inner-footer{
 	border-top: dashed 1px #bfbfbf;
 }
+	#inner-footer p{
+		margin-top: 5px;
+	}
 
 #footer-links{
 	float: right;
@@ -217,14 +253,21 @@ code{
 
 
 /******************************
- * MAIN CONTENT - SINGLE POST VIEW
+ * MAIN CONTENT - INDEX PAGE
  */
 .index-posts{
 	list-style-type: none;
+	margin-left: 0;
 }
+	.index-posts h2{
+		border: 0;
+		margin-bottom: 5px;
+	}
 
 .index-post-title{
 	color: #920000;
+	font-weight: bolder;
+	font-variant: small-caps;
 }
 
 .index-post-meta{
@@ -233,4 +276,6 @@ code{
 	font-size: 16px;
 	color: #686868;
 	text-align: justify;
+	margin: 0;
+	padding: 0;
 }
