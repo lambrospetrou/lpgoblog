@@ -216,7 +216,7 @@ func main() {
 	http.HandleFunc("/all", rootHandler)
 	http.HandleFunc("/", rootHandler)
 
-	fs := http.FileServer(http.Dir("static_data"))
+	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/goblog/static/", http.StripPrefix("/goblog/static/", fs))
 
 	http.ListenAndServe(":40080", nil)
