@@ -158,9 +158,13 @@ code{
 		display: block;
 		line-height: 1;
 	}
-		#header-logo span:hover{
+		#header-logo a{
+			color: #282828;
+			opacity: 1;
+		}
+		#header-logo a:hover{
 			color: #920000;
-			cursor: default;
+			border: 0;
 		}
 
 	#header-quote{
