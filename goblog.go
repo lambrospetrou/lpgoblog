@@ -45,7 +45,7 @@ var templates = template.Must(template.ParseFiles(
 	"templates/partials/footer.html",
 	"templates/view.html",
 	"templates/edit.html",
-	"templates/login.html"))
+	"templates/add.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, o interface{}) {
 	// now we can call the correct template by the basename filename
@@ -83,7 +83,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, id string) {
 		Post:          bp,
 		Footer:        &FooterStruct{Year: time.Now().Year()},
 		Header:        &HeaderStruct{Title: bp.Title},
-		FormattedDate: bp.DateEditedMarkdown.Format("January 02, 2006 | Monday -- 15:04PM"),
+		FormattedDate: bp.FormattedUpdateTime(),
 	}
 
 	renderTemplate(w, "view", bundle)
@@ -124,28 +124,32 @@ func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
 	bp.Title = r.FormValue("title")
 	bp.Save()
 
-	http.Redirect(w, r, "/view/"+string(id), http.StatusFound)
+	http.Redirect(w, r, "/view/"+bp.IdStr(), http.StatusFound)
+}
+
+func addHandler(w http.ResponseWriter, r *http.Request) {
+
+	if strings.ToLower(r.Method) == "get" {
+		renderTemplate(w, "add", "")
+		return
+	} else if strings.ToLower(r.Method) == "post" {
+		bp, err := NewBPost()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		bp.ContentMarkdown = r.FormValue("markdown")
+		bp.Title = r.FormValue("title")
+		bp.Save()
+
+		http.Redirect(w, r, "/view/"+bp.IdStr(), http.StatusFound)
+		return
+	}
+	http.Error(w, "Not supported method", http.StatusMethodNotAllowed)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love you %s\n", r.URL.Path[1:])
-}
-
-// displays the login form
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "login", "")
-}
-
-// try to extract the credentials first from the header and then from the FormValue
-func authenticate(w http.ResponseWriter, r *http.Request) {
-	user := r.FormValue("user")
-	pass := r.FormValue("pass")
-	fmt.Println(user, ":", pass)
-	fmt.Println(r.Header.Get("Authorization"))
-	fmt.Println(r.Header.Get("Content-type"))
-
-	w.Header().Set("Authorization", "Basic realm=\"Login credentials\"")
-	http.Error(w, "Not Authorized", http.StatusUnauthorized)
 }
 
 // Checks if the username:password are correct and valid
@@ -173,8 +177,7 @@ func main() {
 	http.HandleFunc("/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(saveHandler)))
 
-	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/auth", authenticate)
+	http.HandleFunc("/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
 
 	fs := http.FileServer(http.Dir("static_data"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))

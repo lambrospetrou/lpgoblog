@@ -4,9 +4,7 @@
 <form action="/save/{{.Id}}" method="POST">
 	<input name="title" type="text" value="{{.Title}}"/>
     <div>
-        <textarea name="markdown" rows="30" cols="80">
-        	{{printf "%s" .ContentMarkdown}}
-		</textarea>
+        <textarea name="markdown" rows="30" cols="80">{{printf "%s" .ContentMarkdown}}</textarea>
     </div>
 	<div>
 		<input type="submit" value="Save">

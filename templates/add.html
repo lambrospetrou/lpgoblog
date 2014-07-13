@@ -1,0 +1,14 @@
+{{ template "header" }}
+
+<h1>New post</h1>
+<form action="/add" method="POST">
+	<input name="title" type="text"/>
+    <div>
+        <textarea name="markdown" rows="30" cols="80"></textarea>
+    </div>
+	<div>
+		<input type="submit" value="Save">
+	</div>
+</form>
+
+{{ template "footer" }}

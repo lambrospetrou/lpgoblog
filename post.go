@@ -27,6 +27,10 @@ func (p *BPost) IdStr() string {
 	return strconv.Itoa(p.Id)
 }
 
+func (p *BPost) FormattedUpdateTime() string {
+	return p.DateEditedMarkdown.Format("January 02, 2006 | Monday -- 15:04PM")
+}
+
 func (p *BPost) Save() error {
 	// update the HTML content
 	p.DateEditedMarkdown = time.Now()
