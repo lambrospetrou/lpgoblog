@@ -2,7 +2,7 @@
 
 <h1>Editing {{.Title}}</h1>
 
-<form action="/save/{{.Id}}" method="POST">
+<form action="/goblog/save/{{.Id}}" method="POST">
 	<label for="title">post title</label>
 	<input id="title" name="title" type="text" value="{{.Title}}" required/>
 	<label for="date-created">date created</label>

@@ -27,7 +27,7 @@ body{
 }
 
 .inner-section{
-	padding: 10px 15px 20px 15px;
+	padding: 10px 0px 20px 0px;
 	margin: 0;
 	width: 700px;
 	margin: 0 auto;
@@ -82,7 +82,7 @@ p{
 
 ul, ol{
 	list-style-position: outside;
-	margin-left: 20px;
+	margin-left: 30px;
 }
 
 ul ol, ul ul, ol ul, ol ol{
