@@ -32,11 +32,7 @@ type TemplateBundleIndex struct {
 	Header *HeaderStruct
 }
 
-const (
-	DIR_POSTS_SRC = "posts/pub/"
-)
-
-var validPath = regexp.MustCompile("^/(view|edit|save|del)/([a-zA-Z0-9_-]+)$")
+var validPath = regexp.MustCompile("^/goblog/(view|edit|save|del)/([a-zA-Z0-9_-]+)$")
 
 var templates = template.Must(template.ParseFiles(
 	"templates/partials/header.html",
@@ -171,7 +167,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 
 // show all posts
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	//fmt.Fprintf(w, "Hi there, I love you %s\n", r.URL.Path[1:])
+	//fmt.Fprintf(w, "Hi there, I love you %s\n", r.URL.Path)
 	posts, err := LoadAllBlogPosts()
 	if err != nil {
 		http.Error(w, "Could not load blog posts", http.StatusInternalServerError)
@@ -204,20 +200,20 @@ func isBasicCredValid(user string, pass string) bool {
 
 func main() {
 
-	http.HandleFunc("/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+	http.HandleFunc("/goblog/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(editHandler)))
-	http.HandleFunc("/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+	http.HandleFunc("/goblog/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(saveHandler)))
-	http.HandleFunc("/del/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+	http.HandleFunc("/goblog/del/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(deleteHandler)))
-	http.HandleFunc("/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
+	http.HandleFunc("/goblog/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
 
-	http.HandleFunc("/view/", makeHandler(viewHandler))
-	http.HandleFunc("/all", rootHandler)
-	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/goblog/view/", makeHandler(viewHandler))
+	http.HandleFunc("/goblog/all", rootHandler)
+	http.HandleFunc("/goblog/", rootHandler)
 
 	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/goblog/static/", http.StripPrefix("/goblog/static/", fs))
 
 	http.ListenAndServe(":40080", nil)
 }
