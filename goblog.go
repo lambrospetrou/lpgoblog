@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -199,6 +200,8 @@ func isBasicCredValid(user string, pass string) bool {
 }
 
 func main() {
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	http.HandleFunc("/goblog/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(editHandler)))
