@@ -29,7 +29,8 @@ body{
 .inner-section{
 	padding: 10px 0px 20px 0px;
 	margin: 0;
-	width: 700px;
+        width: 90%;
+	max-width: 700px;
 	margin: 0 auto;
 }
 
@@ -77,6 +78,8 @@ h5{
 
 p{
 	margin-top: 15px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
 }
 
 
@@ -120,7 +123,15 @@ ol ol ol{
 	list-style-type: lower-greek;
 }
 
+pre{
+       overflow-x: auto;
+}
+
 code{
+        overflow: auto;
+        white-space: pre;
+        word-wrap: normal;
+        overflow-wrap: normal;
 	margin: 10px 0;
 	display: block;
 	padding: 10px;
