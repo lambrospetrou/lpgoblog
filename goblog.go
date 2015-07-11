@@ -33,7 +33,7 @@ type TemplateBundleIndex struct {
 	Header *HeaderStruct
 }
 
-var validPath = regexp.MustCompile("^/goblog/(view|edit|save|del)/([a-zA-Z0-9_-]+)$")
+var validPath = regexp.MustCompile("^/blog/(view|edit|save|del)/([a-zA-Z0-9_-]+)$")
 
 var templates = template.Must(template.ParseFiles(
 	"templates/partials/header.html",
@@ -42,6 +42,8 @@ var templates = template.Must(template.ParseFiles(
 	"templates/edit.html",
 	"templates/add.html",
 	"templates/index.html"))
+
+var BLOG_PREFIX = "/blog"
 
 func renderTemplate(w http.ResponseWriter, tmpl string, o interface{}) {
 	// now we can call the correct template by the basename filename
@@ -124,7 +126,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	http.Redirect(w, r, "/goblog/view/"+bp.IdStr(), http.StatusFound)
+	http.Redirect(w, r, BLOG_PREFIX+"/view/"+bp.IdStr(), http.StatusFound)
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request, id string) {
@@ -143,7 +145,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request, id string) {
 		return
 	}
 
-	http.Redirect(w, r, "/goblog/", http.StatusFound)
+	http.Redirect(w, r, BLOG_PREFIX+"/", http.StatusFound)
 }
 
 func addHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +162,7 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 		bp.Title = r.FormValue("title")
 		bp.Save()
 
-		http.Redirect(w, r, "/goblog/view/"+bp.IdStr(), http.StatusFound)
+		http.Redirect(w, r, BLOG_PREFIX+"/view/"+bp.IdStr(), http.StatusFound)
 		return
 	}
 	http.Error(w, "Not supported method", http.StatusMethodNotAllowed)
@@ -203,20 +205,20 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	http.HandleFunc("/goblog/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+	http.HandleFunc(BLOG_PREFIX+"/edit/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(editHandler)))
-	http.HandleFunc("/goblog/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+	http.HandleFunc(BLOG_PREFIX+"/save/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(saveHandler)))
-	http.HandleFunc("/goblog/del/", lpgoauth.BasicAuthHandler(isBasicCredValid,
+	http.HandleFunc(BLOG_PREFIX+"/del/", lpgoauth.BasicAuthHandler(isBasicCredValid,
 		makeHandler(deleteHandler)))
-	http.HandleFunc("/goblog/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
+	http.HandleFunc(BLOG_PREFIX+"/add", lpgoauth.BasicAuthHandler(isBasicCredValid, addHandler))
 
-	http.HandleFunc("/goblog/view/", makeHandler(viewHandler))
-	http.HandleFunc("/goblog/all", rootHandler)
-	http.HandleFunc("/goblog/", rootHandler)
+	http.HandleFunc(BLOG_PREFIX+"/view/", makeHandler(viewHandler))
+	http.HandleFunc(BLOG_PREFIX+"/all", rootHandler)
+	http.HandleFunc(BLOG_PREFIX+"/", rootHandler)
 
 	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/goblog/static/", http.StripPrefix("/goblog/static/", fs))
+	http.Handle(BLOG_PREFIX+"/static/", http.StripPrefix(BLOG_PREFIX+"/static/", fs))
 
 	http.ListenAndServe(":40080", nil)
 }
