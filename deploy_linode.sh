@@ -8,7 +8,9 @@ go build -o goblog-t
 
 # move the executable to the public directory while restarting supervisor
 mv goblog-t /home/lambros/public/lambrospetrou.com/public/blog/goblog
-cp -rf templates /home/lambros/public/lambrospetrou.com/public/blog/templates
-cp -rf static /home/lambros/public/lambrospetrou.com/public/blog/static
+rm -rf /home/lambros/public/lambrospetrou.com/public/blog/templates
+cp -rf templates /home/lambros/public/lambrospetrou.com/public/blog/
+rm -rf /home/lambros/public/lambrospetrou.com/public/blog/static
+cp -rf static /home/lambros/public/lambrospetrou.com/public/blog/
 
 sudo supervisorctl restart lpgoblog
