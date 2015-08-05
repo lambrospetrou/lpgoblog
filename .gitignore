@@ -2,3 +2,6 @@ lpgoblog
 ./lpgoblog
 RUNNING_PID
 /uploads
+
+build-release/
+build-release
